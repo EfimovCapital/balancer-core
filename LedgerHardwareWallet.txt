@@ -1,0 +1,71 @@
+import Web3 from "web3";
+import createLedgerSubprovider from "@ledgerhq/web3-subprovider";
+import TransportU2F from "@ledgerhq/hw-transport-u2f";
+import ProviderEngine from "web3-provider-engine";
+import RpcSubprovider from "web3-provider-engine/subproviders/rpc";
+
+const contract_address = "The contract address goes here";
+const abi = [];
+
+let my_web3;
+let account;
+const rpcUrl = "https://ropsten.infura.io";
+let contract;
+window.addEventListener('load', () => {
+  const use_ledger = location.search.indexOf("ledger=true") >= 0;
+
+  if(use_ledger)
+  {
+    const engine = new ProviderEngine();
+    const getTransport = () => TransportU2F.create();
+    const ledger = createLedgerSubprovider(getTransport, {
+      networkId: 3, // 3 == Ropsten testnet
+    });
+    engine.addProvider(ledger);
+    engine.addProvider(new RpcSubprovider({ rpcUrl }));
+    engine.start();
+    my_web3 = new Web3(engine); 
+  } else if(typeof(web3) === 'undefined') {
+    my_web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
+  } else {
+    my_web3 = new Web3(web3.currentProvider);    
+  }
+  contract = new my_web3.eth.Contract(abi, contract_address);
+  my_web3.eth.getAccounts((error, result) => {
+    if(error) {
+      console.log(error);
+    } else if(result.length == 0) {
+      console.log("You are not logged in");
+    } else {
+      account = result[0];
+      contract.options.from = account;
+    }
+  }).catch((error) => {
+    console.log("Error: " + error);
+  });
+  contract.methods.message().call((error, result) => {
+      if(error) {
+          return console.log(error);
+      }
+      $('#message').text(result);
+  }).catch((error) => {
+    console.log("Error: " + error);
+  });
+
+  $('#set_message').click(setMessage);
+});
+
+function setMessage() {
+  let message = $('#new_message').val();
+  contract.methods.setMessage(message).send(
+    {gasPrice: my_web3.utils.toWei("4.1", 'Gwei')}, 
+    (error, result) => {
+        if(error) {
+            return console.log(error);
+        }
+        console.log("txhash: " + result); 
+    }
+  ).catch((error) => {
+    console.log("Error: " + error);
+  });
+}
