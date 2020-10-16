@@ -99,7 +99,7 @@ contract YeildLockV1 {
     
     event Withdrew(address to, uint256 amount);
     
-        // callable by owner only, after specified time
+        // callable after specified time
     function withdraw() public {
        require(block.timestamp >= _releaseTime);
        
