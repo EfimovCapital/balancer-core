@@ -9,7 +9,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
  * tokens after a given release time.
  *
  * Useful for simple vesting schedules like "advisors get all of their tokens
- * after 1 year".
+ * after 180 days".
  */
 contract YeildLockV1 {
     using SafeERC20 for IERC20;
@@ -20,7 +20,7 @@ contract YeildLockV1 {
     // beneficiary of tokens after they are released
     address private _beneficiary;
     
-     uint256 public releaseTime = 120;
+     uint256 public releaseTime = 15552000;
 
     // timestamp when token release is enabled
     uint256 private _releaseTime;
@@ -71,8 +71,7 @@ contract YeildLockV1 {
     
     /*
      * @dev Locks a specified amount of tokens against an address,
-     *      for a specified reason and time
-     * @param _reason The reason to lock tokens
+     *      for a specified  time
      * @param _amount Number of tokens to be locked
      * @param _time Lock time in seconds
      */
@@ -107,4 +106,7 @@ contract YeildLockV1 {
        msg.sender.transfer(address(this).balance);
        emit Withdrew(msg.sender, address(this).balance);
     }
+        // Prevents accidental sending of ether to the factory
+    fallback () external {
+        revert();
 }
